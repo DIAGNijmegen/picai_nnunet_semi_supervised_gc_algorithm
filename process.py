@@ -47,7 +47,11 @@ class MultipleScansSameSequencesError(Exception):
         super.__init__(message)
 
 
-def convert_to_original_extent(pred: np.ndarray, pkl_path: Union[Path, str], dst_path: Union[Path, str]):
+def convert_to_original_extent(
+    pred: np.ndarray,
+    pkl_path: Union[Path, str],
+    dst_path: Union[Path, str]
+) -> sitk.Image:
     # convert to nnUNet's internal softmax format
     pred = np.array([1-pred, pred])
 
@@ -61,6 +65,11 @@ def convert_to_original_extent(pred: np.ndarray, pkl_path: Union[Path, str], dst
         out_fname=str(dst_path),
         properties_dict=properties,
     )
+
+    # now each voxel in softmax.nii.gz corresponds to the same voxel in the original (T2-weighted) scan
+    pred_ensemble = sitk.ReadImage(str(dst_path))
+
+    return pred_ensemble
 
 
 def extract_lesion_candidates_cropped(pred: np.ndarray, threshold: Union[str, float]):
@@ -173,14 +182,11 @@ class csPCaAlgorithm(SegmentationAlgorithm):
 
         # the prediction is currently at the size and location of the nnU-Net preprocessed
         # scan, so we need to convert it to the original extent before we continue
-        convert_to_original_extent(
+        pred_ensemble = convert_to_original_extent(
             pred=pred_ensemble,
             pkl_path=self.nnunet_out_dir / "scan.pkl",
             dst_path=self.nnunet_out_dir / "softmax.nii.gz",
         )
-
-        # now each voxel in softmax.nii.gz corresponds to the same voxel in the original (T2-weighted) scan
-        pred_ensemble = sitk.ReadImage(str(self.nnunet_out_dir / "softmax.nii.gz"))
 
         # extract lesion candidates from softmax prediction
         # note: we set predictions outside the central 81 x 192 x 192 mm to zero, as this is far outside the prostate
