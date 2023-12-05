@@ -11,7 +11,18 @@ docker volume create $DOCKER_FILE_SHARE
 # you can see your output (to debug what's going on) by specifying a path instead:
 # DOCKER_FILE_SHARE="/mnt/netcache/pelvis/projects/joeran/tmp-docker-volume"
 
-docker run --cpus=4 --memory=32gb --shm-size=32gb --gpus='"device=0"' --rm \
+MEM_LIMIT="4g"
+
+# Do not change any of the parameters to docker run, these are fixed
+docker run --rm \
+        --memory="${MEM_LIMIT}" \
+        --memory-swap="${MEM_LIMIT}" \
+        --network="none" \
+        --cap-drop="ALL" \
+        --security-opt="no-new-privileges" \
+        --shm-size="128m" \
+        --pids-limit="256" \
+        --gpus='"device=0"' \
         -v $SCRIPTPATH/test/:/input/ \
         -v $DOCKER_FILE_SHARE:/output/ \
         picai_baseline_nnunet_semi_supervised_processor

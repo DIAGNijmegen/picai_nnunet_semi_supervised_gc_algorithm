@@ -24,12 +24,11 @@ import SimpleITK as sitk
 from evalutils import SegmentationAlgorithm
 from evalutils.validators import (UniqueImagesValidator,
                                   UniquePathIndicesValidator)
-from report_guided_annotation import extract_lesion_candidates
-
 from picai_baseline.nnunet.softmax_export import \
     save_softmax_nifti_from_softmax
 from picai_prep.data_utils import atomic_image_write
 from picai_prep.preprocessing import Sample, crop_or_pad
+from report_guided_annotation import extract_lesion_candidates
 
 
 class MissingSequenceError(Exception):
@@ -248,7 +247,7 @@ class csPCaAlgorithm(SegmentationAlgorithm):
         if disable_patch_overlap:
             cmd.extend(['--step_size', '1'])
 
-        subprocess.check_call(cmd)
+        print(subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True).stdout)
 
 
 if __name__ == "__main__":
